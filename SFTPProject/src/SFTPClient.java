@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
  */
 public class SFTPClient 
 {
+	private CFMLayer cfmInterface;
 	private Socket connection;
 	private FileManager serverNameFile;
 	private FileManager fileManager;
@@ -35,155 +36,18 @@ public class SFTPClient
 	
 	public SFTPClient()
 	{
-		
+		cfmInterface = new CFMLayer();
 	}
 	
-	private void establishConnection()
-	{
-		/*System.out.println("Please enter a url.");
-		
-		userInput = new BufferedReader(new InputStreamReader(System.in));
-		url = userInput.readLine();*/
-		
-		//TODO write code to connect to DNS Server and resolve URL
-		if(null == connection || !connection.isConnected())
-		{
-			try
-			{
-				connection = new Socket("localhost", 5432);
-				System.out.println("The control connection has been made");
-							
-			}catch(IOException e)
-			{
-				e.printStackTrace();
-				System.out.println("Error making a connection.");
-				System.exit(0);
-			}
-		}
-		
-	}
-	
-	
-	private void TranspInitCntrl()
-	{
-		if(!connection.isConnected())
-		{
-			System.out.println("Please establish a connection to host.");
-			System.exit(0);
-		}
-				
-		try
-		{
-			outputData = new PrintStream(connection.getOutputStream());
-			inputReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			
-			System.out.println("Control Connection has been established.");
-			
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error creating Control Connection.");
-		}
-	}
-	
-	private void TranspInitData()
-	{
-		if(!connection.isConnected())
-		{
-			System.out.println("Please establish a connection to host.");
-			System.exit(0);
-		}
-				
-		try
-		{
-			inputDataStream = new DataInputStream(connection.getInputStream());
-			outputDataStream = new DataOutputStream(connection.getOutputStream());
-			
-			
-			System.out.println("Data Connection has been established.");
-			
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error creating Data Connection.");
-		}
-		
-	}
-	
-	private void DataTranspSend()
-	{
-		
-	}
-	
-	private void DataTranspRecv()
-	{
-		
-	}
-	
-	private void CtrlTranspSend()
-	{
-		try
-		{
-			System.out.println("Please enter a command to send to the Server");			
-			userInput = new Scanner(System.in);			
-			String commandLine;
-			
-			while((commandLine = userInput.nextLine()) != null)
-			{
-				List<String> commandList = new ArrayList<String>();
-				StringTokenizer commandTokens = new StringTokenizer(commandLine, " ");
-				
-				while(commandTokens.hasMoreTokens())
-				{
-					commandList.add(commandTokens.nextToken());
-				}
-				
-				if(this.validateInput(commandList))
-				{
-					outputData.println(commandLine);
-					System.out.println("echo: " + inputReader.readLine());
-				}
-				
-			}
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error reading input.");
-			System.exit(0);
-		}
-		
-	}
-	
-	private void TranspCloseCntrl()
-	{
-		try
-		{
-			this.userInput.close();
-			this.inputReader.close();
-			this.outputData.close();
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error closing control connection.");
-			System.exit(0);
-		}
-		
-	}
-	
-	private void TranspClose()
-	{
-		
-	}
 	
 	public void run()
 	{
-		this.establishConnection();
-		this.TranspInitCntrl();
-		this.TranspInitData();
-		this.CtrlTranspSend();		
+		cfmInterface.TranspInitCntrl();
+		cfmInterface.TranspInitData();
+		cfmInterface.CtrlTranspSend();		
 	}
 	
-	public void CtrlTranspSend(List<String> commandLine)
+	/*public void CtrlTranspSend(List<String> commandLine)
 	{
 		
 		CommandEnum command = CommandEnum.valueOf(commandLine.get(0).toUpperCase());
@@ -230,7 +94,7 @@ public class SFTPClient
 		}
 				
 		
-	}
+	}*/
 	
 	private boolean validateInput(List<String> inputRequest)
 	{
