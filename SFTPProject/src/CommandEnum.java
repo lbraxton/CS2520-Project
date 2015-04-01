@@ -11,7 +11,7 @@ public enum CommandEnum {
 	
 	private String commandType;
 	
-	private CommandEnum(String command)
+	CommandEnum(String command)
 	{
 		commandType = command;
 	}

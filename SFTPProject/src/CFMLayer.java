@@ -1,17 +1,19 @@
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
-import java.net.Socket;
-import java.util.ArrayList;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.SocketException;
 import java.util.List;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 
 /**
  * 
@@ -23,69 +25,123 @@ import java.util.StringTokenizer;
  */
 public class CFMLayer 
 {
-	private BufferedReader inputReader;
-	private DataInputStream inputDataStream;
-	private DataOutputStream outputDataStream;
+	private BufferedReader inputReader;	
 	private PrintStream outputData;
-	private FileInputStream fileOutputStream;
-	private ObjectInputStream objInputStream;
-	private ObjectOutputStream objOutputStream;
-	private Scanner userInput;
+	private ByteArrayOutputStream baoStream;
+	private ByteArrayInputStream baiStream;
+	private ObjectOutputStream objoStream;
+	private ObjectInputStream objiStream;
+	//private Connection serverCntrlConnection; 
+	//private Connection clientCntrlConnection;
 	private Connection connection;
+	private DDLayer ddLayer;
+	private DatagramPacket sendPacket;
+	private DatagramPacket receivePacket;
+	private CtrlPacket ctrlPacket;
+	private SFTPServer sftpServer;
+	private ProcessSourceEnum processSource;
+	private InetAddress inetAddress;
+	private int port;
 	
-	
-	public CFMLayer()
+	public CFMLayer(ProcessSourceEnum processSrcEnum)
 	{
-	
+		processSource = processSrcEnum;
+		
+		//Remove this code once the DNS code is implemented		
+		if(ProcessSourceEnum.SERVER_PROCESS.equals(processSrcEnum))
+		{
+			connection = new Connection(5432);
+		}else
+		{
+			connection = new Connection();
+		}
+		
+		inetAddress = connection.getSocket().getInetAddress();
+		port =  connection.getSocket().getLocalPort();
+		
 	}
 	
 	public void TranspInitCntrl()
 	{
-		/*System.out.println("Please enter a url.");
-		
-		userInput = new BufferedReader(new InputStreamReader(System.in));
-		url = userInput.readLine();*/
-		
-		//TODO write code to connect to DNS Server and resolve URL
-		
-				connection = new Connection("localhost", 5432);
-				System.out.println("The control connection has been made");
-		
-		try
+			//TODO write code to in Client to get the IP and port number of the DNS server to 
+			//make a connection to receive the server IP and Port number
+		/*if(null == serverCntrlConnection || null == serverCntrlConnection.getSocket())
 		{
-			outputData = new PrintStream(connection.getSocket().getOutputStream());
-			inputReader = new BufferedReader(new InputStreamReader(connection.getSocket().getInputStream()));
+			sftpServer = new SFTPServer();
+			serverCntrlConnection = new Connection(sftpServer.getPort());
+		}
+				
+		if(null == clientCntrlConnection || null == clientCntrlConnection.getSocket())
+		{
+			clientCntrlConnection = new Connection();
+		}*/
+		
+	}
+	
+	public void CtrlTranspSend(List<String> commandLine, InetAddress hostAddress, int serverPort)
+	{
+		
+		baoStream = new ByteArrayOutputStream();
+		ctrlPacket = new CtrlPacket();
+		ctrlPacket.setPayload(commandLine);
+		try 
+		{
+			objoStream = new ObjectOutputStream(baoStream);
+			objoStream.writeObject(ctrlPacket);
+			byte[] outPacket = baoStream.toByteArray();
+			sendPacket = new DatagramPacket(outPacket,outPacket.length,hostAddress,serverPort);
 			
-			System.out.println("Control Connection has been established.");
+			connection.getSocket().send(sendPacket);
 			
-		}catch(IOException e)
+			System.out.println("Packet sent successfully.");
+			
+		} catch (IOException e) 
 		{
 			e.printStackTrace();
-			System.out.println("Error creating Control Connection.");
+			System.out.println("Error creating output steam.");
+		}
+		
+		
+	}
+	
+	public void CtrlTranspRecv()
+	{
+		byte[] inPacket = new byte[1024];
+		receivePacket = new DatagramPacket(inPacket, inPacket.length);
+		
+		try 
+		{
+			connection.getSocket().receive(receivePacket);
+			byte[] receivedData = receivePacket.getData();
+			baiStream = new ByteArrayInputStream(receivedData);
+			objiStream = new ObjectInputStream(baiStream);
+			try 
+			{
+				ctrlPacket = (CtrlPacket) objiStream.readObject();
+				System.out.println("CtrlPacket object received " + ctrlPacket );
+				
+			} catch (ClassNotFoundException e) 
+			{
+				e.printStackTrace();
+				System.out.println("Error reading packet.");
+				System.exit(0);
+			} 
+			
+		} catch (IOException e) 
+		{
+			e.printStackTrace();
+			System.out.println("Error receiving packet.");
+			System.exit(0);
 		}
 	}
 	
 	public void TranspInitData()
 	{
-		if(!connection.getSocket().isConnected())
+		if(sftpServer.getPort() == 0)
 		{
-			System.out.println("Please establish a connection to host.");
-			System.exit(0);
+			sftpServer = new SFTPServer();
 		}
-				
-		try
-		{
-			inputDataStream = new DataInputStream(connection.getSocket().getInputStream());
-			outputDataStream = new DataOutputStream(connection.getSocket().getOutputStream());
-			
-			
-			System.out.println("Data Connection has been established.");
-			
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error creating Data Connection.");
-		}
+		ddLayer = new DDLayer(sftpServer.getPort());
 		
 	}
 	
@@ -99,99 +155,81 @@ public class CFMLayer
 		
 	}
 	
-	public void CtrlTranspSend()
+	public void execute()
 	{
-		try
-		{
-			System.out.println("Please enter a command to send to the Server");			
-			userInput = new Scanner(System.in);			
-			String commandLine;
-			
-			while((commandLine = userInput.nextLine()) != null)
-			{
-				List<String> commandList = new ArrayList<String>();
-				StringTokenizer commandTokens = new StringTokenizer(commandLine, " ");
-				
-				while(commandTokens.hasMoreTokens())
-				{
-					commandList.add(commandTokens.nextToken());
-				}
-								
-				if(this.validateInput(commandList))
-				{
-					outputData.println(commandLine);
-					System.out.println("echo: " + inputReader.readLine());
-				}
-			}
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error reading input.");
-			System.exit(0);
-		}
+		List<String> commandLine = this.getCtrlPacket().getPayload();
+		CommandEnum command = CommandEnum.valueOf(commandLine.get(0).toUpperCase());
 		
+		switch (command)
+		{
+			case RCD :
+			{
+				
+				break;
+			}
+			case LCD :
+			{
+				break;
+			}
+			case PWD :
+			{
+				break;
+			}
+			case RLS :
+			{
+				break;
+			}
+			case LLS :
+			{
+				break;
+			}
+			case GET :
+			{
+				break;
+			}
+			case MGET :
+			{
+				break;
+			}
+			case PUT :
+			{
+				break;
+			}
+			case MPUT :
+			{
+				break;
+			}
+		}
 	}
+	
 	
 	public void TranspCloseCntrl()
 	{
-		try
-		{
-			this.userInput.close();
-			this.inputReader.close();
-			this.outputData.close();
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-			System.out.println("Error closing control connection.");
-			System.exit(0);
-		}
-		
+		this.connection.getSocket().close();
 	}
-	
-	private void TranspClose()
-	{
-		
+
+	public CtrlPacket getCtrlPacket() {
+		return ctrlPacket;
 	}
-	
-	
-	private boolean validateInput(List<String> inputRequest)
-	{
-		
-		if(!(inputRequest.size() > 2))
-		{
-			System.out.println("You did not enter a valid request.");
-			return false;
-		}
-		
-		try
-		{
-			CommandEnum.valueOf(inputRequest.get(0).toUpperCase());
+
+	public void setCtrlPacket(CtrlPacket ctrlPacket) {
+		this.ctrlPacket = ctrlPacket;
+	}
+
+	public InetAddress getInetAddress() {
+		return inetAddress;
+	}
+
+	public void setInetAddress(InetAddress inetAddress) {
+		this.inetAddress = inetAddress;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
 			
-		}catch(IllegalArgumentException e)
-		{
-			System.out.println("You did not enter a valid request.");
-			return false;
-		}
-		
-		//TODO Still working on this
-		/*String WINDOWS_FILE_PATTERN = "(?:[a-zA-Z]\\:)\\\\([\\w-]+\\\\)*\\w([\\w-.])+";
-		String UNIX_LIKE_FILE_PATTERN = "^(/)?([^/\0]+(/)?)+$";
-				
-		Pattern windowsPattern = Pattern.compile(WINDOWS_FILE_PATTERN);
-		Pattern unixLikePattern = Pattern.compile(UNIX_LIKE_FILE_PATTERN);
-		
-		Matcher windowsSourceMatcher = windowsPattern.matcher(inputRequest.get(0));
-		Matcher windowsDestMatcher = windowsPattern.matcher(inputRequest.get(0));
-		Matcher unixLikeSourceMatcher = unixLikePattern.matcher(inputRequest.get(0));
-		Matcher unixLikeDestMatcher = unixLikePattern.matcher(inputRequest.get(0));
-		
-		if((windowsSourceMatcher.matches() && windowsDestMatcher.matches()) || (unixLikeSourceMatcher.matches() && unixLikeDestMatcher.matches()))
-		{
-			//TODO Get the server file System path format and compare
-			return true;
-		}*/
-		
-		return true;
-		
-	}
 }

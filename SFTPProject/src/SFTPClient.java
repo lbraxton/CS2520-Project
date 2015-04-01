@@ -15,86 +15,74 @@ import java.util.regex.Pattern;
 public class SFTPClient 
 {
 	private CFMLayer cfmInterface;
-	private Socket connection;
 	private FileManager serverNameFile;
 	private FileManager fileManager;
-	private BufferedReader inputReader;
-	private DataInputStream inputDataStream;
-	private DataOutputStream outputDataStream;
-	private PrintStream outputData;
-	private FileInputStream fileOutputStream;
-	private ObjectInputStream objInputStream;
-	private ObjectOutputStream objOutputStream;
-	private EnumSet<CommandEnum> commandEnumSet;
 	private Scanner userInput;
-	private String inputFile;
 	private String url;
 	private String severFileLocation;
-	private String serverAddress;
+	private InetAddress serverInetAddress;
 	private String clientAddress;
-	private int portNumber;
+	private int clientPort;
+	private int serverPort;
 	
 	public SFTPClient()
 	{
-		cfmInterface = new CFMLayer();
+		cfmInterface = new CFMLayer(ProcessSourceEnum.CLIENT_PROCESS);
+	}
+	
+	public void intialize()
+	{
+		//Retrieve Server InetAddress and Port number from DNS server
+		try 
+		{
+			serverInetAddress= InetAddress.getByName("127.0.0.1");
+			
+		} catch (UnknownHostException e) 
+		{
+			e.printStackTrace();
+			System.out.println("Error retrieving InetAddress");
+		}
+		serverPort = 5432;
 	}
 	
 	
 	public void run()
 	{
-		cfmInterface.TranspInitCntrl();
-		cfmInterface.TranspInitData();
-		cfmInterface.CtrlTranspSend();		
-	}
-	
-	/*public void CtrlTranspSend(List<String> commandLine)
-	{
-		
-		CommandEnum command = CommandEnum.valueOf(commandLine.get(0).toUpperCase());
-		
-		switch (command)
+		//This method will take a File object argument to retrieve the server
+		//InetAddress and Port number
+		this.intialize();
+				
+		try
 		{
-			case RCD :
+			System.out.println("Please enter a command to send to the Server");			
+			userInput = new Scanner(System.in);			
+			String commandLine;
+			
+			while((commandLine = userInput.nextLine()) != null)
 			{
+				List<String> commandList = new ArrayList<String>();
+				StringTokenizer commandTokens = new StringTokenizer(commandLine, " ");
 				
-				break;
+				while(commandTokens.hasMoreTokens())
+				{
+					commandList.add(commandTokens.nextToken());
+				}
+								
+				if(this.validateInput(commandList))
+				{
+					
+					cfmInterface.CtrlTranspSend(commandList, this.getServerInetAddress(), this.getServerPort());	
+				}
 			}
-			case LCD :
-			{
-				break;
-			}
-			case PWD :
-			{
-				break;
-			}
-			case RLS :
-			{
-				break;
-			}
-			case LLS :
-			{
-				break;
-			}
-			case GET :
-			{
-				break;
-			}
-			case MGET :
-			{
-				break;
-			}
-			case PUT :
-			{
-				break;
-			}
-			case MPUT :
-			{
-				break;
-			}
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+			System.out.println("Error reading input.");
+			System.exit(0);
 		}
-				
 		
-	}*/
+		
+	}
 	
 	private boolean validateInput(List<String> inputRequest)
 	{
@@ -149,14 +137,6 @@ public class SFTPClient
 		return severFileLocation;
 	}
 		
-	public String getServerAddress() {
-		return serverAddress;
-	}
-
-	public void setServerAddress(String serverAddress) {
-		this.serverAddress = serverAddress;
-	}
-
 	public String getClientAddress() {
 		return clientAddress;
 	}
@@ -166,17 +146,42 @@ public class SFTPClient
 	}	
 
 	public int getPortNumber() {
-		return portNumber;
+		return clientPort;
 	}
 
 	public void setPortNumber(int portNumber) {
-		this.portNumber = portNumber;
+		this.clientPort = portNumber;
 	}
 
 	public FileManager getFileManager() {
 		return fileManager;
 	}
 	
+	public int getClientPort() {
+		return clientPort;
+	}
+
+
+	public void setClientPort(int clientPort) {
+		this.clientPort = clientPort;
+	}
+
+	public InetAddress getServerInetAddress() {
+		return serverInetAddress;
+	}
+
+	public void setServerInetAddress(InetAddress serverInetAddress) {
+		this.serverInetAddress = serverInetAddress;
+	}
+
+	public int getServerPort() {
+		return serverPort;
+	}
+
+	public void setServerPort(int serverPort) {
+		this.serverPort = serverPort;
+	}
+
 	/**
 	 * @param args
 	 */

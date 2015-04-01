@@ -5,45 +5,44 @@ import java.net.*;
  * @author Lanette Braxton
  *
  */
-public class SFTPServer {
-	
-	private ServerSocket serverSocket;
-	private Socket socket;
+public class SFTPServer 
+{	
 	private ServerThread thread;
-	private String ipAddress;
+	private CFMLayer cfmLayer;
+	private InetAddress inetAddress;
+	private int port;
 
 	public SFTPServer()
 	{
 		
 	}
 	
+	public void initialize()
+	{
+		cfmLayer = new CFMLayer(ProcessSourceEnum.SERVER_PROCESS);
+		//Retrieve Port number and InetAddress from the Datagram Socket
+		port = cfmLayer.getPort();
+		inetAddress = cfmLayer.getInetAddress();
+		// write address and port to server_info file
+		
+	}
+	
 	public void run()
 	{
-		try 
-		{
-			serverSocket = new ServerSocket(5432);
-			System.out.println("Server socket created....");
-			
-		} catch (IOException e) 
-		{
-			e.printStackTrace();
-			System.out.println("Error creating Server socket");
-			System.exit(0);
-		}
-		
+		//This method will take a File object argument to store the server
+		//InetAddress and Port number
+		this.initialize();
+		System.out.println("Running Server");
+	
 		for(;;)
 		{
+			
 			try 
 			{
-				int threadID = 1;
-				socket = serverSocket.accept();
-				thread = new ServerThread(socket, threadID);
-				threadID++;
+				cfmLayer.CtrlTranspRecv();
+				cfmLayer.execute();
 				
-				System.out.println("Running thread.");
-				thread.run();
-				
-			} catch (IOException e) 
+			} catch (Exception e) 
 			{
 				e.printStackTrace();
 				System.out.println("Error making connection to the server");
@@ -53,26 +52,21 @@ public class SFTPServer {
 		}
 	}
 	
-	public String getIpAddress() {
-		return ipAddress;
+	public int getPort() {
+		return port;
 	}
 
-
-
-	public void setIpAddress(String ipAddress) {
-		this.ipAddress = ipAddress;
-	}	
-
-
-	public ServerSocket getServerSocket() {
-		return serverSocket;
+	public void setPort(int port) {
+		this.port = port;
+	}
+	
+	public InetAddress getInetAddress() {
+		return inetAddress;
 	}
 
-
-	public void setServerSocket(ServerSocket serverSocket) {
-		this.serverSocket = serverSocket;
+	public void setInetAddress(InetAddress inetAddress) {
+		this.inetAddress = inetAddress;
 	}
-
 
 	/**
 	 * @param args

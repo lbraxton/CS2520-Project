@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.Map;
  * @author Lanette Braxton
  *
  */
-public class TCPPacket 
+public class DataPacket implements Serializable
 {
 	private Map<String, List<Byte>> header;
 	private List<Byte> payload;
@@ -20,7 +21,7 @@ public class TCPPacket
 	private long whenRecieved;
 	private boolean failed;
 	
-	public TCPPacket()
+	public DataPacket()
 	{
 		header = new HashMap<String, List<Byte>>();
 		header.put("Source Port", new ArrayList<Byte>());

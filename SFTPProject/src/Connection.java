@@ -1,6 +1,7 @@
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 
 /**
@@ -13,47 +14,43 @@ import java.net.UnknownHostException;
  */
 public class Connection 
 {
-	private Socket socket;
+	private DatagramSocket socket;
 	
-	public Connection(String hostName, int port)
+	
+	public Connection()
 	{
 		try 
 		{
-			socket = new Socket(hostName, port);
+			socket = new DatagramSocket();
+		} catch (SocketException e) {
 			
-		} catch (UnknownHostException e) 
-		{
-			e.printStackTrace();
-			System.out.println("The host name could not be resolved");
-			
-		} catch (IOException e) 
-		{
 			e.printStackTrace();
 			System.out.println("Error creating connection");
+			System.exit(0);
 		}
 	}
 	
-	public Connection(InetAddress hostName, int port)
+	public Connection(int port)
 	{
 		try 
 		{
-			socket = new Socket(hostName, port);
+			socket = new DatagramSocket(port);
+		} catch (SocketException e) {
 			
-		} catch (UnknownHostException e) 
-		{
-			e.printStackTrace();
-			System.out.println("The host name could not be resolved");
-			
-		} catch (IOException e) 
-		{
 			e.printStackTrace();
 			System.out.println("Error creating connection");
+			System.exit(0);
 		}
 	}
-
-	public Socket getSocket() 
+	
+	
+	public DatagramSocket getSocket() 
 	{
 		return socket;
+	}
+
+	public void setSocket(DatagramSocket socket) {
+		this.socket = socket;
 	}
 	
 	

@@ -2,6 +2,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,18 +19,35 @@ import java.util.Map;
  * @author Lanette Braxton
  *
  */
-public class PacketsForData 
+public class DDLayer 
 {
-	private static final int MAX_FILE_SIZE = 1024; 
+	private DatagramSocket dataSocket;
+	private DatagramPacket dataPacket;
+	private FileInputStream fileOutputStream;
+	private ObjectInputStream objInputStream;
+	private ObjectOutputStream objOutputStream;
+	static final int MAX_FILE_SIZE = 1024; 
+	private Connection serverDataConnection; 
+	private Connection clientDataConnection;
 	private List<ArrayList> windowsOfPackets = null;
 	 
-	public PacketsForData()
+	public DDLayer()
 	{	
+		
 	}
 	
-	public PacketsForData(File file)
+	public DDLayer(int serverPort)
 	{
-		byte[] fileContents = this.retrieveFileData(file);
+		//byte[] fileContents = this.retrieveFileData(file);
+		if(null == serverDataConnection || null == serverDataConnection.getSocket())
+		{
+			serverDataConnection = new Connection(serverPort);
+		}
+				
+		if(null == clientDataConnection || null == clientDataConnection.getSocket())
+		{
+			clientDataConnection = new Connection();
+		}	
 		
 	}
 	
@@ -83,6 +104,13 @@ public class PacketsForData
 		//TODO Create data packets
 				
 	}
+	
+	public void TranspClose()
+	{
+		serverDataConnection.getSocket().close(); 
+		clientDataConnection.getSocket().close();
+	}
+	
 	public List<ArrayList> getWindowsOfPackets() {
 		return windowsOfPackets;
 	}
