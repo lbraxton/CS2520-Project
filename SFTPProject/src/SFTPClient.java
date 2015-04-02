@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 public class SFTPClient 
 {
 	private CFMLayer cfmInterface;
+	private Command clientCommand;
+	private CommandEnum clientCommandEnum;
 	private FileManager serverNameFile;
 	private FileManager fileManager;
 	private Scanner userInput;
@@ -56,23 +58,26 @@ public class SFTPClient
 		{
 			System.out.println("Please enter a command to send to the Server");			
 			userInput = new Scanner(System.in);			
-			String commandLine;
+			String[] commandLine;
 			
-			while((commandLine = userInput.nextLine()) != null)
+			while((commandLine = userInput.nextLine().split(" ")) != null)
 			{
-				List<String> commandList = new ArrayList<String>();
-				StringTokenizer commandTokens = new StringTokenizer(commandLine, " ");
-				
-				while(commandTokens.hasMoreTokens())
+				if(this.validateInput(commandLine) && commandLine.length == 3)
 				{
-					commandList.add(commandTokens.nextToken());
+					clientCommandEnum = CommandEnum.valueOf(commandLine[0].toUpperCase());
+					File file1 = new File(commandLine[1]);
+					File file2 = new File(commandLine[2]);
+					clientCommand = new Command(clientCommandEnum, file1, file2);		
+					
+				}else if(this.validateInput(commandLine) && commandLine.length == 2)
+				{
+					clientCommandEnum = CommandEnum.valueOf(commandLine[0].toUpperCase());
+					File file1 = new File(commandLine[1]);
+					clientCommand = new Command(clientCommandEnum, file1);
 				}
 								
-				if(this.validateInput(commandList))
-				{
-					
-					cfmInterface.CtrlTranspSend(commandList, this.getServerInetAddress(), this.getServerPort());	
-				}
+					cfmInterface.CtrlTranspSend(clientCommand, this.getServerInetAddress(), this.getServerPort());	
+					cfmInterface.execute();
 			}
 		}catch(Exception e)
 		{
@@ -84,10 +89,10 @@ public class SFTPClient
 		
 	}
 	
-	private boolean validateInput(List<String> inputRequest)
+	private boolean validateInput(String[] commandLine)
 	{
 		
-		if(!(inputRequest.size() > 2))
+		if(!(commandLine.length > 1))
 		{
 			System.out.println("You did not enter a valid request.");
 			return false;
@@ -95,7 +100,7 @@ public class SFTPClient
 		
 		try
 		{
-			CommandEnum.valueOf(inputRequest.get(0).toUpperCase());
+			CommandEnum.valueOf(commandLine[0].toUpperCase());
 			
 		}catch(IllegalArgumentException e)
 		{

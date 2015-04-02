@@ -31,8 +31,6 @@ public class CFMLayer
 	private ByteArrayInputStream baiStream;
 	private ObjectOutputStream objoStream;
 	private ObjectInputStream objiStream;
-	//private Connection serverCntrlConnection; 
-	//private Connection clientCntrlConnection;
 	private Connection connection;
 	private DDLayer ddLayer;
 	private DatagramPacket sendPacket;
@@ -40,6 +38,8 @@ public class CFMLayer
 	private CtrlPacket ctrlPacket;
 	private SFTPServer sftpServer;
 	private ProcessSourceEnum processSource;
+	private Command command;
+	private FileManager fileManager;
 	private InetAddress inetAddress;
 	private int port;
 	
@@ -58,6 +58,7 @@ public class CFMLayer
 		
 		inetAddress = connection.getSocket().getInetAddress();
 		port =  connection.getSocket().getLocalPort();
+		fileManager = new FileManager();
 		
 	}
 	
@@ -78,30 +79,33 @@ public class CFMLayer
 		
 	}
 	
-	public void CtrlTranspSend(List<String> commandLine, InetAddress hostAddress, int serverPort)
+	public void CtrlTranspSend(Command commandLine, InetAddress hostAddress, int serverPort)
 	{
+		command = commandLine;
 		
-		baoStream = new ByteArrayOutputStream();
-		ctrlPacket = new CtrlPacket();
-		ctrlPacket.setPayload(commandLine);
-		try 
+		if(!command.getCommand().equals(CommandEnum.LCD) && !command.getCommand().equals(CommandEnum.LLS))
 		{
-			objoStream = new ObjectOutputStream(baoStream);
-			objoStream.writeObject(ctrlPacket);
-			byte[] outPacket = baoStream.toByteArray();
-			sendPacket = new DatagramPacket(outPacket,outPacket.length,hostAddress,serverPort);
-			
-			connection.getSocket().send(sendPacket);
-			
-			System.out.println("Packet sent successfully.");
-			
-		} catch (IOException e) 
-		{
-			e.printStackTrace();
-			System.out.println("Error creating output steam.");
+			baoStream = new ByteArrayOutputStream();
+			ctrlPacket = new CtrlPacket();
+			ctrlPacket.setPayload(commandLine);
+			try 
+			{
+				objoStream = new ObjectOutputStream(baoStream);
+				objoStream.writeObject(ctrlPacket);
+				byte[] outPacket = baoStream.toByteArray();
+				sendPacket = new DatagramPacket(outPacket,outPacket.length,hostAddress,serverPort);
+				
+				connection.getSocket().send(sendPacket);
+				
+				System.out.println("Packet sent successfully.");
+				
+			} catch (IOException e) 
+			{
+				e.printStackTrace();
+				System.out.println("Error creating output steam.");
+			}
 		}
-		
-		
+				
 	}
 	
 	public void CtrlTranspRecv()
@@ -118,6 +122,7 @@ public class CFMLayer
 			try 
 			{
 				ctrlPacket = (CtrlPacket) objiStream.readObject();
+				command = ctrlPacket.getPayload(); 
 				System.out.println("CtrlPacket object received " + ctrlPacket );
 				
 			} catch (ClassNotFoundException e) 
@@ -157,18 +162,19 @@ public class CFMLayer
 	
 	public void execute()
 	{
-		List<String> commandLine = this.getCtrlPacket().getPayload();
-		CommandEnum command = CommandEnum.valueOf(commandLine.get(0).toUpperCase());
 		
-		switch (command)
+		switch (command.getCommand())
 		{
 			case RCD :
 			{
+				fileManager.changeDirectories(command.getSourceFile());
 				
 				break;
 			}
 			case LCD :
 			{
+				fileManager.changeDirectories(command.getSourceFile());
+				
 				break;
 			}
 			case PWD :
@@ -177,10 +183,14 @@ public class CFMLayer
 			}
 			case RLS :
 			{
+				fileManager.listDirectorycontents(command.getSourceFile());
+				
 				break;
 			}
 			case LLS :
 			{
+				fileManager.listDirectorycontents(command.getSourceFile());
+					
 				break;
 			}
 			case GET :

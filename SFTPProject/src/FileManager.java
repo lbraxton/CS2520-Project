@@ -18,7 +18,8 @@ import javax.swing.JFileChooser;
  * @author Lanette Braxton
  *
  */
-public class FileManager{
+public class FileManager
+{
 	
 	private File sourceFile;
 	private File destinationFile;
@@ -183,6 +184,30 @@ public class FileManager{
 			}
 			
 	}	
+	
+	public void listDirectorycontents(File file)
+	{
+		File[] contents = file.listFiles();
+		
+		for(File fileOrDir : contents)
+		{
+			try
+			{
+				System.out.println(fileOrDir.getCanonicalPath());
+				
+			} catch (IOException e) 
+			{
+				e.printStackTrace();
+				System.out.println("Error retrieving the path for " + fileOrDir);
+			}
+		}
+	}
+	
+	public void changeDirectories(File file)
+	{
+		String oldDirectory = System.setProperty("user.dir", file.getAbsolutePath());
+		this.listDirectorycontents(file);
+	}
 	
 	public String getFileName() {
 		return fileName;

@@ -15,7 +15,7 @@ import java.util.Map;
 public class CtrlPacket implements Serializable
 {
 	private Map<String, List<Byte>> header;
-	private List<String> payload;
+	private Command payload;
 	private static final int MAX_PAYLOAD_SIZE = 1024;
 	private long whenSent;
 	private long whenRecieved;
@@ -36,7 +36,7 @@ public class CtrlPacket implements Serializable
 		header.put("Urgent Pointer", new ArrayList<Byte>());
 		header.put("Options", new ArrayList<Byte>());
 		header.put("Padding", new ArrayList<Byte>());
-		payload = new ArrayList<String>();
+		payload = new Command();
 	}
 
 	public long getWhenSent() {
@@ -66,13 +66,14 @@ public class CtrlPacket implements Serializable
 	public Map<String, List<Byte>> getHeader() {
 		return header;
 	}
-	
-	public List<String> getPayload() {
+
+	public Command getPayload() {
 		return payload;
 	}
 
-	public void setPayload(List<String> payload) {
+	public void setPayload(Command payload) {
 		this.payload = payload;
 	}
+	
 	
 }
