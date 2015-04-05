@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  * 
@@ -13,28 +14,11 @@ public class Command implements Serializable
 
 {
 	private CommandEnum command;
-	private File sourceFile;
-	private File destinationFile;
+	private ArrayList<File> files;
 	
 	Command()
 	{
-		
-	}
-	
-	Command(CommandEnum userCommand, File source)
-	{
-		command = userCommand;
-		sourceFile = source;
-		destinationFile = null;
-		
-	}
-	
-	Command(CommandEnum userCommand, File source, File destination)
-	{
-		command = userCommand;
-		sourceFile = source;
-		destinationFile = destination;
-		
+		files = new ArrayList<File>();
 	}
 
 	public CommandEnum getCommand() {
@@ -45,21 +29,9 @@ public class Command implements Serializable
 		this.command = command;
 	}
 
-	public File getSourceFile() {
-		return sourceFile;
-	}
-
-	public void setSourceFile(File sourceFile) {
-		this.sourceFile = sourceFile;
-	}
-
-	public File getDestinationFile() {
-		return destinationFile;
-	}
-
-	public void setDestinationFile(File destinationFile) {
-		this.destinationFile = destinationFile;
+	public ArrayList<File> getFiles() {
+		return files;
 	}
 	
-	
+		
 }

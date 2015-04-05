@@ -62,18 +62,22 @@ public class SFTPClient
 			
 			while((commandLine = userInput.nextLine().split(" ")) != null)
 			{
-				if(this.validateInput(commandLine) && commandLine.length == 3)
+				boolean valid = this.validateInput(commandLine);
+				
+				if(valid)
 				{
 					clientCommandEnum = CommandEnum.valueOf(commandLine[0].toUpperCase());
-					File file1 = new File(commandLine[1]);
-					File file2 = new File(commandLine[2]);
-					clientCommand = new Command(clientCommandEnum, file1, file2);		
+					clientCommand = new Command();
+					clientCommand.setCommand(clientCommandEnum);
 					
-				}else if(this.validateInput(commandLine) && commandLine.length == 2)
+					for(int x = 1; x < commandLine.length; x++)
+					{
+						File file = new File(commandLine[x]);
+						clientCommand.getFiles().add(file);
+					}
+				}else if(!valid)
 				{
-					clientCommandEnum = CommandEnum.valueOf(commandLine[0].toUpperCase());
-					File file1 = new File(commandLine[1]);
-					clientCommand = new Command(clientCommandEnum, file1);
+					continue;
 				}
 								
 					cfmInterface.CtrlTranspSend(clientCommand, this.getServerInetAddress(), this.getServerPort());	
@@ -92,7 +96,7 @@ public class SFTPClient
 	private boolean validateInput(String[] commandLine)
 	{
 		
-		if(!(commandLine.length > 1))
+		if(!(commandLine.length >= 1))
 		{
 			System.out.println("You did not enter a valid request.");
 			return false;

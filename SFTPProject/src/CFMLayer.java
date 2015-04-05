@@ -167,29 +167,30 @@ public class CFMLayer
 		{
 			case RCD :
 			{
-				fileManager.changeDirectories(command.getSourceFile());
+				fileManager.changeDirectories(command.getFiles().get(0));
 				
 				break;
 			}
 			case LCD :
 			{
-				fileManager.changeDirectories(command.getSourceFile());
+				fileManager.changeDirectories(command.getFiles().get(0));
 				
 				break;
 			}
 			case PWD :
 			{
+				fileManager.listPresentWorkingDirectory();
 				break;
 			}
 			case RLS :
 			{
-				fileManager.listDirectorycontents(command.getSourceFile());
+				fileManager.listDirectorycontents(command.getFiles().get(0));
 				
 				break;
 			}
 			case LLS :
 			{
-				fileManager.listDirectorycontents(command.getSourceFile());
+				fileManager.listDirectorycontents(command.getFiles().get(0));
 					
 				break;
 			}

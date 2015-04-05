@@ -209,6 +209,11 @@ public class FileManager
 		this.listDirectorycontents(file);
 	}
 	
+	public void listPresentWorkingDirectory()
+	{
+		System.out.println(System.getProperty("user.dir"));
+	}
+	
 	public String getFileName() {
 		return fileName;
 	}
